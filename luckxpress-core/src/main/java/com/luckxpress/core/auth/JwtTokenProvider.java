@@ -82,11 +82,11 @@ public class JwtTokenProvider {
      */
     public UserPrincipal getUserPrincipalFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+            Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
             
             String userId = claims.getSubject();
             String username = claims.get("username", String.class);
@@ -121,11 +121,11 @@ public class JwtTokenProvider {
      */
     public String getUserIdFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+            Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
             
             return claims.getSubject();
         } catch (Exception ex) {
@@ -139,10 +139,10 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+            Jwts.parser()
+                .verifyWith(secretKey)
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token);
             
             return true;
         } catch (SecurityException ex) {
@@ -165,11 +165,11 @@ public class JwtTokenProvider {
      */
     public boolean isRefreshToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+            Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
             
             return "refresh".equals(claims.get("type", String.class));
         } catch (Exception ex) {
@@ -182,11 +182,11 @@ public class JwtTokenProvider {
      */
     public Date getExpirationDateFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+            Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
             
             return claims.getExpiration();
         } catch (Exception ex) {

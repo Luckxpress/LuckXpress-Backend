@@ -43,7 +43,7 @@ public class SecurityContext {
      */
     public static String getCurrentUserState() {
         return getCurrentUserPrincipal()
-            .map(UserPrincipal::getStateCode)
+            .map(principal -> principal.getStateCode())
             .orElse(null);
     }
     
