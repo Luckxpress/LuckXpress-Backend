@@ -1,0 +1,328 @@
+# LuckXpress Backend Application Configuration
+# CRITICAL: Production-ready configuration with security and compliance settings
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+  error:
+    include-stacktrace: never
+    include-message: always
+
+spring:
+  application:
+    name: luckxpress-backend
+  
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  
+  # Database Configuration
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:luckxpress;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
+    driver-class-name: ${DATABASE_DRIVER:org.h2.Driver}
+    hikari:
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT:30000}
+      idle-timeout: ${DB_IDLE_TIMEOUT:600000}
+      max-lifetime: ${DB_MAX_LIFETIME:1800000}
+      pool-name: LuckXpress-HikariCP
+      leak-detection-threshold: 60000
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:create-drop}
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: ${JPA_FORMAT_SQL:false}
+        use_sql_comments: true
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+        generate_statistics: ${JPA_SHOW_SQL:false}
+        # Envers (Audit) Configuration
+        envers:
+          audit_table_suffix: _audit
+          revision_field_name: revision_id
+          revision_type_field_name: revision_type
+          store_data_at_delete: true
+  
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://auth.luckxpress.com}
+          jwk-set-uri: ${JWT_JWK_SET_URI:https://auth.luckxpress.com/.well-known/jwks.json}
+  
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+  
+  # Cache Configuration
+  cache:
+    type: ${CACHE_TYPE:simple}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# LuckXpress Specific Configuration
+luckxpress:
+  # API Configuration
+  api:
+    version: 1.0.0
+    server:
+      url: ${API_SERVER_URL:http://localhost:8080}
+  
+  # JWT Configuration
+  jwt:
+    secret: ${JWT_SECRET:luckxpress-super-secret-key-that-should-be-changed-in-production}
+    access-token-validity: ${JWT_ACCESS_TOKEN_VALIDITY:3600} # 1 hour
+    refresh-token-validity: ${JWT_REFRESH_TOKEN_VALIDITY:86400} # 24 hours
+    issuer: ${JWT_ISSUER:luckxpress}
+  
+  # Database Pool Configuration
+  database:
+    pool:
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT:30000}
+      idle-timeout: ${DB_IDLE_TIMEOUT:600000}
+      max-lifetime: ${DB_MAX_LIFETIME:1800000}
+  
+  # Compliance Configuration
+  compliance:
+    # Transaction Limits (in decimal format with 4 places)
+    limits:
+      min-deposit-amount: ${MIN_DEPOSIT_AMOUNT:1.0000}
+      max-deposit-amount: ${MAX_DEPOSIT_AMOUNT:10000.0000}
+      min-withdrawal-amount: ${MIN_WITHDRAWAL_AMOUNT:25.0000}
+      max-withdrawal-amount: ${MAX_WITHDRAWAL_AMOUNT:2500.0000}
+      daily-deposit-limit: ${DAILY_DEPOSIT_LIMIT:5000.0000}
+      daily-withdrawal-limit: ${DAILY_WITHDRAWAL_LIMIT:2500.0000}
+      monthly-withdrawal-limit: ${MONTHLY_WITHDRAWAL_LIMIT:25000.0000}
+      max-daily-withdrawals: ${MAX_DAILY_WITHDRAWALS:3}
+    
+    # Approval Thresholds
+    approval:
+      dual-approval-threshold: ${DUAL_APPROVAL_THRESHOLD:1000.0000}
+      triple-approval-threshold: ${TRIPLE_APPROVAL_THRESHOLD:5000.0000}
+      enhanced-kyc-threshold: ${ENHANCED_KYC_THRESHOLD:2500.0000}
+    
+    # State Restrictions
+    states:
+      restricted: ${RESTRICTED_STATES:ID,WA,MT,NV}
+      enhanced-kyc-required: ${ENHANCED_KYC_STATES:NY,FL,CA}
+  
+  # Security Configuration
+  security:
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://*.luckxpress.com}
+      allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,PATCH,OPTIONS}
+      max-age: ${CORS_MAX_AGE:3600}
+
+# Logging Configuration
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.luckxpress: ${LOG_LEVEL_LUCKXPRESS:INFO}
+    org.springframework.security: ${LOG_LEVEL_SECURITY:WARN}
+    org.springframework.web: ${LOG_LEVEL_WEB:WARN}
+    org.hibernate: ${LOG_LEVEL_HIBERNATE:WARN}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_SQL_PARAMS:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{requestId:-}] [%X{userId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{requestId:-}] [%X{userId:-}] [%X{ipAddress:-}] %logger{36} - %msg%n"
+  file:
+    name: ${LOG_FILE:logs/luckxpress-backend.log}
+    max-size: ${LOG_FILE_MAX_SIZE:100MB}
+    max-history: ${LOG_FILE_MAX_HISTORY:30}
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS:health,info,metrics,prometheus}
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: ${HEALTH_SHOW_DETAILS:when-authorized}
+      show-components: always
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: ${REDIS_HEALTH_CHECK:false}
+  metrics:
+    export:
+      prometheus:
+        enabled: ${PROMETHEUS_ENABLED:false}
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active}
+
+# Springdoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:true}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+  show-actuator: false
+  group-configs:
+    - group: public
+      display-name: Public API
+      paths-to-match: /api/public/**
+    - group: user
+      display-name: User API
+      paths-to-match: /api/user/**, /api/account/**, /api/transaction/**, /api/withdrawal/**, /api/kyc/**
+    - group: admin
+      display-name: Admin API
+      paths-to-match: /api/admin/**, /api/approval/**
+
+---
+# Local Development Profile
+spring:
+  config:
+    activate:
+      on-profile: local
+  
+  # H2 Database for local development
+  datasource:
+    url: jdbc:h2:mem:luckxpress;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  # H2 Console
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# Enable all management endpoints for local development
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+# Enable debug logging for local development
+logging:
+  level:
+    com.luckxpress: DEBUG
+    org.springframework.security: DEBUG
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # PostgreSQL for development
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/luckxpress_dev}
+    username: ${DATABASE_USERNAME:luckxpress_dev}
+    password: ${DATABASE_PASSWORD:dev_password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+# Reduced logging for development
+logging:
+  level:
+    com.luckxpress: INFO
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  # PostgreSQL for production
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+# Production security settings
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+
+# Restricted management endpoints for production
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+# Production logging
+logging:
+  level:
+    root: WARN
+    com.luckxpress: INFO
+  file:
+    name: /var/log/luckxpress/luckxpress-backend.log
+
+# Disable Swagger in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

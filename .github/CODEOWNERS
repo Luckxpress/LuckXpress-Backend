@@ -1,0 +1,54 @@
+# Global owners - These users will be requested for review when someone opens a pull request
+* @team-lead @architect
+
+# Module specific owners
+/luckxpress-common/ @backend-team
+/luckxpress-core/ @security-team
+/luckxpress-data/ @database-team
+/luckxpress-service/ @backend-team
+/luckxpress-web/ @api-team
+/luckxpress-app/ @backend-team
+
+# Critical financial and security components - Require additional approvals
+/luckxpress-service/src/main/java/com/luckxpress/service/ledger/ @cto @cfo @security-team
+/luckxpress-service/src/main/java/com/luckxpress/service/payment/ @cto @security-team
+/luckxpress-service/src/main/java/com/luckxpress/service/withdrawal/ @cto @cfo @security-team
+/luckxpress-service/src/main/java/com/luckxpress/service/compliance/ @cto @compliance-team
+
+# Configuration and deployment files
+/.github/ @devops-team @team-lead
+/docker/ @devops-team
+/k8s/ @devops-team
+/helm/ @devops-team
+Dockerfile @devops-team
+docker-compose*.yml @devops-team
+
+# Database migrations and schema changes
+/luckxpress-data/src/main/resources/db/ @database-team @cto
+**/migration/ @database-team @cto
+**/schema/ @database-team @cto
+
+# Security configurations
+/luckxpress-core/src/main/java/com/luckxpress/core/security/ @security-team @cto
+**/SecurityConfig.java @security-team @cto
+**/JwtConfig.java @security-team @cto
+
+# API contracts and documentation
+/luckxpress-web/src/main/java/com/luckxpress/web/controller/ @api-team @product-team
+**/openapi/ @api-team @product-team
+**/swagger/ @api-team @product-team
+
+# Build and dependency management
+pom.xml @backend-team @team-lead
+**/pom.xml @backend-team @team-lead
+.mvn/ @backend-team @devops-team
+
+# Documentation
+README.md @team-lead @product-team
+CHANGELOG.md @team-lead @product-team
+/docs/ @product-team @team-lead
+
+# Environment and configuration files
+application*.yml @devops-team @backend-team
+application*.properties @devops-team @backend-team
+logback*.xml @devops-team @backend-team
