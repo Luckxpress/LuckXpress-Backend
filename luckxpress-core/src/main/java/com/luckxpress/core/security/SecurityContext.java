@@ -23,7 +23,7 @@ public class SecurityContext {
      */
     public static String getCurrentUserId() {
         return getCurrentUserPrincipal()
-            .map(UserPrincipal::getUserId)
+            .map(principal -> principal.getUserId())
             .orElse(ANONYMOUS_USER);
     }
     
@@ -33,7 +33,7 @@ public class SecurityContext {
      */
     public static String getCurrentUsername() {
         return getCurrentUserPrincipal()
-            .map(UserPrincipal::getUsername)
+            .map(principal -> principal.getUsername())
             .orElse(ANONYMOUS_USER);
     }
     

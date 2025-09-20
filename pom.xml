@@ -278,6 +278,9 @@
                     <configuration>
                         <source>21</source>
                         <target>21</target>
+                        <compilerArgs>
+                            <arg>-parameters</arg>
+                        </compilerArgs>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>
@@ -290,6 +293,8 @@
                                 <version>${mapstruct.version}</version>
                             </path>
                         </annotationProcessorPaths>
+                        <showWarnings>true</showWarnings>
+                        <showDeprecation>true</showDeprecation>
                     </configuration>
                 </plugin>
                 
