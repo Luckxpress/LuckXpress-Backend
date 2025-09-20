@@ -45,4 +45,4 @@ foreach ($file in $githubFiles) {
 }
 
 Write-Host "`n=== Setup Test Complete ===" -ForegroundColor Green
-Write-Host "If all items show ✓, your setup is ready!" -ForegroundColor Cyan
+Write-Host "If all items show checkmarks, your setup is ready!" -ForegroundColor Cyan
