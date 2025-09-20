@@ -153,9 +153,4 @@ public class UserPrincipal implements UserDetails {
     public List<String> getRoles() { return roles; }
     public String getEmail() { return email; }
     public boolean isKycVerified() { return kycVerified; }
-    
-    // Explicit builder method to work around compilation issues
-    public static UserPrincipalBuilder builder() {
-        return new UserPrincipalBuilder();
-    }
 }

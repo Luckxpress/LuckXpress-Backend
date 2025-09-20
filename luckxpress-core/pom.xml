@@ -46,5 +46,16 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
         </dependency>
+        <!-- Add Spring Web for OncePerRequestFilter and jakarta.servlet.Filter APIs -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- Add Lombok in core module (provided scope) so @Slf4j, @Builder, @Getter compile -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>
