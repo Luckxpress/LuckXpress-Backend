@@ -1,5 +1,6 @@
 package com.luckxpress.core.security;
 
+import com.luckxpress.common.security.UserPrincipal;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.Authentication;
@@ -43,7 +44,7 @@ public class SecurityContext {
      */
     public static String getCurrentUserState() {
         return getCurrentUserPrincipal()
-            .map(UserPrincipal::getStateCode)
+            .map(principal -> principal.getStateCode())
             .orElse(null);
     }
     

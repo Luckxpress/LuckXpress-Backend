@@ -1,16 +1,15 @@
 package com.luckxpress.core.auth;
 
-import com.luckxpress.core.security.UserPrincipal;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
+import com.luckxpress.common.security.UserPrincipal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -21,18 +20,18 @@ import java.util.List;
 @Component
 public class JwtTokenProvider {
     
-    private final SecretKey secretKey;
+    private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
     private final long accessTokenValidityInSeconds;
     private final long refreshTokenValidityInSeconds;
     private final String issuer;
-    
-    public JwtTokenProvider(
-            @Value("${luckxpress.jwt.secret:luckxpress-super-secret-key-that-should-be-changed-in-production}") String secret,
-            @Value("${luckxpress.jwt.access-token-validity:3600}") long accessTokenValidityInSeconds,
-            @Value("${luckxpress.jwt.refresh-token-validity:86400}") long refreshTokenValidityInSeconds,
-            @Value("${luckxpress.jwt.issuer:luckxpress}") String issuer) {
-        
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+
+    public JwtTokenProvider(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder,
+                            @Value("${luckxpress.jwt.access-token-validity:3600}") long accessTokenValidityInSeconds,
+                            @Value("${luckxpress.jwt.refresh-token-validity:86400}") long refreshTokenValidityInSeconds,
+                            @Value("${luckxpress.jwt.issuer:luckxpress}") String issuer) {
+        this.jwtEncoder = jwtEncoder;
+        this.jwtDecoder = jwtDecoder;
         this.accessTokenValidityInSeconds = accessTokenValidityInSeconds;
         this.refreshTokenValidityInSeconds = refreshTokenValidityInSeconds;
         this.issuer = issuer;
@@ -41,52 +40,50 @@ public class JwtTokenProvider {
     /**
      * Generate access token for user
      */
-    public String generateAccessToken(UserPrincipal userPrincipal) {
+    public String generateAccessToken(com.luckxpress.core.security.UserPrincipal userPrincipal) {
         Instant now = Instant.now();
         Instant expiryDate = now.plus(accessTokenValidityInSeconds, ChronoUnit.SECONDS);
-        
-        return Jwts.builder()
-            .setSubject(userPrincipal.getUserId())
-            .setIssuer(issuer)
-            .setIssuedAt(Date.from(now))
-            .setExpiration(Date.from(expiryDate))
-            .claim("username", userPrincipal.getUsername())
-            .claim("email", userPrincipal.getEmail())
-            .claim("roles", userPrincipal.getRoles())
-            .claim("stateCode", userPrincipal.getStateCode())
-            .claim("kycVerified", userPrincipal.isKycVerified())
-            .claim("type", "access")
-            .signWith(secretKey, SignatureAlgorithm.HS512)
-            .compact();
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(issuer)
+                .issuedAt(now)
+                .expiresAt(expiryDate)
+                .subject(userPrincipal.getUserId())
+                .claim("username", userPrincipal.getUsername())
+                .claim("email", userPrincipal.getEmail())
+                .claim("roles", userPrincipal.getRoles())
+                .claim("stateCode", userPrincipal.getStateCode())
+                .claim("kycVerified", userPrincipal.isKycVerified())
+                .claim("type", "access")
+                .build();
+
+        return this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
     
     /**
      * Generate refresh token for user
      */
-    public String generateRefreshToken(UserPrincipal userPrincipal) {
+    public String generateRefreshToken(com.luckxpress.core.security.UserPrincipal userPrincipal) {
         Instant now = Instant.now();
         Instant expiryDate = now.plus(refreshTokenValidityInSeconds, ChronoUnit.SECONDS);
-        
-        return Jwts.builder()
-            .setSubject(userPrincipal.getUserId())
-            .setIssuer(issuer)
-            .setIssuedAt(Date.from(now))
-            .setExpiration(Date.from(expiryDate))
-            .claim("type", "refresh")
-            .signWith(secretKey, SignatureAlgorithm.HS512)
-            .compact();
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(issuer)
+                .issuedAt(now)
+                .expiresAt(expiryDate)
+                .subject(userPrincipal.getUserId())
+                .claim("type", "refresh")
+                .build();
+
+        return this.jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
     
     /**
      * Get UserPrincipal from JWT token
      */
-    public UserPrincipal getUserPrincipalFromToken(String token) {
+    public com.luckxpress.core.security.UserPrincipal getUserPrincipalFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
             
             String userId = claims.getSubject();
             String username = claims.get("username", String.class);
@@ -97,7 +94,7 @@ public class JwtTokenProvider {
             @SuppressWarnings("unchecked")
             List<String> roles = claims.get("roles", List.class);
             
-            return UserPrincipal.builder()
+            return com.luckxpress.core.security.UserPrincipal.builder()
                 .userId(userId)
                 .username(username)
                 .email(email)
@@ -111,7 +108,7 @@ public class JwtTokenProvider {
                 .build();
                 
         } catch (Exception ex) {
-            log.error("Error parsing JWT token", ex);
+            // log.error("Error parsing JWT token", ex);
             return null;
         }
     }
@@ -121,15 +118,11 @@ public class JwtTokenProvider {
      */
     public String getUserIdFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
             
             return claims.getSubject();
         } catch (Exception ex) {
-            log.error("Error extracting user ID from token", ex);
+            // log.error("Error extracting user ID from token", ex);
             return null;
         }
     }
@@ -139,25 +132,13 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token);
+            this.jwtDecoder.decode(token);
             
             return true;
-        } catch (SecurityException ex) {
-            log.error("Invalid JWT signature", ex);
-        } catch (MalformedJwtException ex) {
-            log.error("Invalid JWT token", ex);
-        } catch (ExpiredJwtException ex) {
-            log.error("Expired JWT token", ex);
-        } catch (UnsupportedJwtException ex) {
-            log.error("Unsupported JWT token", ex);
-        } catch (IllegalArgumentException ex) {
-            log.error("JWT claims string is empty", ex);
+        } catch (Exception ex) {
+            // log.error("Invalid JWT token", ex);
+            return false;
         }
-        
-        return false;
     }
     
     /**
@@ -165,11 +146,7 @@ public class JwtTokenProvider {
      */
     public boolean isRefreshToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
             
             return "refresh".equals(claims.get("type", String.class));
         } catch (Exception ex) {
@@ -180,17 +157,13 @@ public class JwtTokenProvider {
     /**
      * Get token expiration date
      */
-    public Date getExpirationDateFromToken(String token) {
+    public Instant getExpirationDateFromToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
             
             return claims.getExpiration();
         } catch (Exception ex) {
-            log.error("Error extracting expiration date from token", ex);
+            // log.error("Error extracting expiration date from token", ex);
             return null;
         }
     }
@@ -199,7 +172,12 @@ public class JwtTokenProvider {
      * Check if token is expired
      */
     public boolean isTokenExpired(String token) {
-        Date expiration = getExpirationDateFromToken(token);
-        return expiration != null && expiration.before(new Date());
+        try {
+            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
+            
+            return claims.getExpiration().isBefore(Instant.now());
+        } catch (Exception ex) {
+            return true;
+        }
     }
 }

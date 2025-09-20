@@ -1,4 +1,4 @@
-package com.luckxpress.core.security;
+package com.luckxpress.common.security;
 
 import lombok.Builder;
 import lombok.Getter;

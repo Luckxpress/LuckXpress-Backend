@@ -7,21 +7,21 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+import java.io.Serializable;
 import java.time.Instant;
 
 /**
- * Base entity for all LuckXpress entities
- * CRITICAL: Provides common fields and ULID generation
+ * Base entity with audit fields
+ * CRITICAL: All entities must extend this for audit trail
  */
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public abstract class BaseEntity {
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public abstract class BaseEntity implements Serializable {
     
     @Id
-    @Column(name = "id", nullable = false, updatable = false, length = 26)
+    @Column(name = "id", length = 32, nullable = false)
     private String id;
     
     @CreatedDate
@@ -34,60 +34,43 @@ public abstract class BaseEntity {
     
     @Version
     @Column(name = "version", nullable = false)
-    private Long version = 0L;
+    private Long version;
     
-    /**
-     * Generate ULID before persist
-     */
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+    
+    @Column(name = "updated_by", length = 100)
+    private String updatedBy;
+    
     @PrePersist
     protected void onCreate() {
-        if (id == null) {
-            id = IdGenerator.generateId();
+        if (this.id == null) {
+            this.id = IdGenerator.generateId(getEntityPrefix());
         }
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-        if (updatedAt == null) {
-            updatedAt = createdAt;
-        }
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
     
-    /**
-     * Update timestamp before update
-     */
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
     
     /**
-     * Check if entity is new (not persisted)
+     * Get entity prefix for ID generation
      */
-    public boolean isNew() {
-        return id == null;
-    }
+    protected abstract String getEntityPrefix();
     
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        
-        BaseEntity that = (BaseEntity) obj;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BaseEntity)) return false;
+        BaseEntity that = (BaseEntity) o;
         return id != null && id.equals(that.id);
     }
     
     @Override
     public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
-    
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "{" +
-               "id='" + id + '\'' +
-               ", createdAt=" + createdAt +
-               ", updatedAt=" + updatedAt +
-               ", version=" + version +
-               '}';
+        return getClass().hashCode();
     }
 }

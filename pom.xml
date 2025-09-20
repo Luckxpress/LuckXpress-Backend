@@ -31,12 +31,14 @@
         <!-- Spring Versions -->
         <spring-cloud.version>2023.0.0</spring-cloud.version>
         <spring-security.version>6.3.0</spring-security.version>
+        <spring-retry.version>2.0.5</spring-retry.version>
         
         <!-- Database Versions -->
         <postgresql.version>42.7.3</postgresql.version>
         <h2.version>2.2.224</h2.version>
         <flyway.version>10.10.0</flyway.version>
         <hikaricp.version>5.1.0</hikaricp.version>
+        <hibernate.version>6.4.4.Final</hibernate.version>
         
         <!-- Core Dependencies Versions -->
         <mapstruct.version>1.5.5.Final</mapstruct.version>
@@ -68,6 +70,7 @@
         <micrometer.version>1.12.4</micrometer.version>
         <logback.version>1.5.3</logback.version>
         <slf4j.version>2.0.12</slf4j.version>
+        <sentry.version>7.3.0</sentry.version>
         
         <!-- Utilities -->
         <guava.version>33.1.0-jre</guava.version>
@@ -153,6 +156,7 @@
             <dependency>
                 <groupId>org.hibernate.orm</groupId>
                 <artifactId>hibernate-envers</artifactId>
+                <version>${hibernate.version}</version>
             </dependency>
             
             <!-- OAuth2 & Security -->
@@ -230,12 +234,14 @@
             <dependency>
                 <groupId>org.springframework.retry</groupId>
                 <artifactId>spring-retry</artifactId>
+                <version>${spring-retry.version}</version>
             </dependency>
             
             <!-- Kafka -->
             <dependency>
                 <groupId>org.springframework.kafka</groupId>
                 <artifactId>spring-kafka</artifactId>
+                <version>${kafka.version}</version>
             </dependency>
             
             <!-- Testing -->
@@ -260,8 +266,42 @@
                 <artifactId>mockito-core</artifactId>
                 <version>${mockito.version}</version>
             </dependency>
+            
+            <!-- Sentry Error Monitoring -->
+            <dependency>
+                <groupId>io.sentry</groupId>
+                <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
+                <version>${sentry.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.sentry</groupId>
+                <artifactId>sentry-logback</artifactId>
+                <version>${sentry.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
     
     <build>
         <pluginManagement>
