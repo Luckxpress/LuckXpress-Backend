@@ -93,29 +93,29 @@ const dataProvider: DataProvider = {
     };
 
     // For demo purposes, return mock data
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const total = data.length;
     
     return Promise.resolve({
-      data: data.slice((page - 1) * perPage, page * perPage),
+      data: data.slice((page - 1) * perPage, page * perPage) as any,
       total,
     });
   },
 
   getOne: (resource, params) => {
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const item = data.find((item: any) => item.id == params.id);
     
     return item 
-      ? Promise.resolve({ data: item })
+      ? Promise.resolve({ data: item as any })
       : Promise.reject(new Error(`Resource ${resource} with id ${params.id} not found`));
   },
 
   getMany: (resource, params) => {
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const items = data.filter((item: any) => params.ids.includes(item.id));
     
-    return Promise.resolve({ data: items });
+    return Promise.resolve({ data: items as any });
   },
 
   getManyReference: (resource, params) => {
@@ -130,17 +130,17 @@ const dataProvider: DataProvider = {
       }),
     };
 
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const filteredData = data.filter((item: any) => item[params.target] == params.id);
     
     return Promise.resolve({
-      data: filteredData.slice((page - 1) * perPage, page * perPage),
+      data: filteredData.slice((page - 1) * perPage, page * perPage) as any,
       total: filteredData.length,
     });
   },
 
   update: (resource, params) => {
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const index = data.findIndex((item: any) => item.id == params.id);
     
     if (index === -1) {
@@ -150,11 +150,11 @@ const dataProvider: DataProvider = {
     const updatedItem = { ...data[index], ...params.data };
     (data as any)[index] = updatedItem;
     
-    return Promise.resolve({ data: updatedItem });
+    return Promise.resolve({ data: updatedItem as any });
   },
 
   updateMany: (resource, params) => {
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const updatedIds: any[] = [];
     
     params.ids.forEach((id) => {
@@ -169,7 +169,7 @@ const dataProvider: DataProvider = {
   },
 
   create: (resource, params) => {
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const newItem = {
       id: Math.max(...data.map((item: any) => item.id), 0) + 1,
       ...params.data,
@@ -177,11 +177,11 @@ const dataProvider: DataProvider = {
     
     (data as any).push(newItem);
     
-    return Promise.resolve({ data: newItem });
+    return Promise.resolve({ data: newItem as any });
   },
 
   delete: (resource, params) => {
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const index = data.findIndex((item: any) => item.id == params.id);
     
     if (index === -1) {
@@ -191,11 +191,11 @@ const dataProvider: DataProvider = {
     const deletedItem = data[index];
     (data as any).splice(index, 1);
     
-    return Promise.resolve({ data: deletedItem });
+    return Promise.resolve({ data: deletedItem as any });
   },
 
   deleteMany: (resource, params) => {
-    const data = mockData[resource as keyof typeof mockData] || [];
+    const data = (mockData as any)[resource] || [];
     const deletedIds: any[] = [];
     
     params.ids.forEach((id) => {

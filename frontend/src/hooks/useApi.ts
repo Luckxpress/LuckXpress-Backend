@@ -37,7 +37,6 @@ export function usePaginatedQuery<T>(
     queryKey: [...queryKey, params],
     queryFn: () => apiService.getPaginated<T>(url, params),
     enabled: options?.enabled !== false,
-    keepPreviousData: options?.keepPreviousData !== false,
     staleTime: 2 * 60 * 1000, // 2 minutes for paginated data
   });
 }

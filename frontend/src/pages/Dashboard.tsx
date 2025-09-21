@@ -1,292 +1,455 @@
-import React from 'react';
-import {
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Paper,
-  Avatar,
-  LinearProgress,
-  Chip,
-  IconButton,
-} from '@mui/material';
-import {
-  TrendingUp,
-  TrendingDown,
-  People,
-  AttachMoney,
-  Receipt,
-  Security,
-  Warning,
-  CheckCircle,
-  MoreVert,
-} from '@mui/icons-material';
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-} from 'recharts';
+import React, { useEffect, useState } from 'react';
+import { Grid, Card, CardContent, Typography, Box, Button } from '@mui/material';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import GroupIcon from '@mui/icons-material/Group';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import PendingIcon from '@mui/icons-material/Pending';
+import { useDataProvider } from 'react-admin';
 
-// Mock data for charts
-const revenueData = [
-  { name: 'Jan', revenue: 65000, users: 1200 },
-  { name: 'Feb', revenue: 78000, users: 1350 },
-  { name: 'Mar', revenue: 82000, users: 1420 },
-  { name: 'Apr', revenue: 91000, users: 1580 },
-  { name: 'May', revenue: 87000, users: 1520 },
-  { name: 'Jun', revenue: 95000, users: 1650 },
-];
+// Import chart components
+import RevenueTrendChart from '../components/Dashboard/RevenueTrendChart';
+import ConversionFunnel from '../components/Dashboard/ConversionFunnel';
+import LiveActivityFeed from '../components/Dashboard/LiveActivityFeed';
+import ProviderStatus from '../components/Dashboard/ProviderStatus';
 
-const transactionData = [
-  { name: 'Deposits', value: 65, color: '#00d4ff' },
-  { name: 'Withdrawals', value: 25, color: '#ff6b6b' },
-  { name: 'Transfers', value: 10, color: '#4ecdc4' },
-];
-
-const kycStatusData = [
-  { name: 'Mon', pending: 45, approved: 120, rejected: 8 },
-  { name: 'Tue', pending: 52, approved: 135, rejected: 12 },
-  { name: 'Wed', pending: 38, approved: 98, rejected: 6 },
-  { name: 'Thu', pending: 61, approved: 142, rejected: 15 },
-  { name: 'Fri', pending: 55, approved: 128, rejected: 9 },
-  { name: 'Sat', pending: 42, approved: 95, rejected: 7 },
-  { name: 'Sun', pending: 35, approved: 88, rejected: 5 },
-];
-
-interface KPICardProps {
+// Metric Card Component
+const MetricCard = ({ title, value, change, trend, icon, prefix = '$' }: {
   title: string;
-  value: string;
-  change: string;
-  changeType: 'positive' | 'negative';
+  value: number;
+  change: number;
+  trend: 'up' | 'down';
   icon: React.ReactElement;
-  color: string;
-}
-
-const KPICard: React.FC<KPICardProps> = ({ title, value, change, changeType, icon, color }) => (
-  <Card sx={{ height: '100%', position: 'relative', overflow: 'visible' }}>
-    <CardContent>
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-        <Box>
-          <Typography color="textSecondary" gutterBottom variant="h6">
-            {title}
-          </Typography>
-          <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
-            {value}
-          </Typography>
-          <Box display="flex" alignItems="center">
-            {changeType === 'positive' ? (
-              <TrendingUp sx={{ color: '#4caf50', mr: 0.5 }} />
-            ) : (
-              <TrendingDown sx={{ color: '#f44336', mr: 0.5 }} />
-            )}
-            <Typography
-              variant="body2"
-              sx={{ color: changeType === 'positive' ? '#4caf50' : '#f44336' }}
+  prefix?: string;
+}) => {
+  const isPositive = trend === 'up';
+  const trendColor = isPositive ? '#4CAF50' : '#F44336';
+  const formattedValue = value.toLocaleString();
+  
+  return (
+    <Card 
+      sx={{ 
+        height: '100%', 
+        minHeight: 140, 
+        borderRadius: 2,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+        },
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '4px',
+          height: '100%',
+          backgroundColor: trendColor,
+        }
+      }}
+    >
+      <CardContent sx={{ p: 3 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+          <Box>
+            <Typography 
+              color="textSecondary" 
+              variant="caption" 
+              sx={{ 
+                fontSize: '0.75rem', 
+                fontWeight: 600, 
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                mb: 1,
+                display: 'block'
+              }}
             >
-              {change}
+              {title}
             </Typography>
+            <Typography 
+              variant="h4" 
+              component="div" 
+              sx={{ 
+                fontWeight: 700, 
+                color: '#2C3E50',
+                fontSize: '1.75rem',
+                mb: 1
+              }}
+            >
+              {prefix}{formattedValue}
+            </Typography>
+            <Box 
+              display="flex" 
+              alignItems="center" 
+              sx={{
+                backgroundColor: `${trendColor}10`,
+                borderRadius: '4px',
+                py: 0.5,
+                px: 1,
+                display: 'inline-flex',
+              }}
+            >
+              {isPositive ? (
+                <TrendingUpIcon sx={{ color: trendColor, fontSize: 16, mr: 0.5 }} />
+              ) : (
+                <TrendingDownIcon sx={{ color: trendColor, fontSize: 16, mr: 0.5 }} />
+              )}
+              <Typography
+                variant="body2"
+                sx={{ 
+                  color: trendColor,
+                  fontWeight: 600,
+                  fontSize: '0.75rem'
+                }}
+              >
+                {isPositive ? '+' : ''}{change}%
+              </Typography>
+            </Box>
+          </Box>
+          <Box 
+            sx={{ 
+              color: 'white',
+              backgroundColor: '#4CAF50',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 8px rgba(76, 175, 80, 0.2)'
+            }}
+          >
+            {React.cloneElement(icon, { sx: { fontSize: 24 } })}
           </Box>
         </Box>
-        <Avatar sx={{ bgcolor: color, width: 56, height: 56 }}>
-          {icon}
-        </Avatar>
-      </Box>
-    </CardContent>
-  </Card>
-);
+      </CardContent>
+    </Card>
+  );
+};
 
-export const Dashboard: React.FC = () => {
+// Main Dashboard Component
+const Dashboard = () => {
+  const dataProvider = useDataProvider();
+  const [metrics, setMetrics] = useState({
+    revenue: 60,
+    activeUsers: 8,
+    deposits: 0,
+    withdrawals: 0,
+    revenueChange: 12.3,
+    usersChange: 8.1,
+    depositsChange: -2.4,
+    withdrawalsStatus: 'pending'
+  });
+
+  useEffect(() => {
+    // Fetch dashboard metrics from backend API
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/dashboard/metrics`);
+        if (response.ok) {
+          const data = await response.json();
+          setMetrics(data);
+          console.log('Dashboard metrics loaded from API:', data);
+        } else {
+          console.error('Failed to fetch metrics from API');
+        }
+      } catch (error) {
+        console.error('Failed to fetch metrics:', error);
+        // Fallback to existing mock data on error
+      }
+    };
+
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [dataProvider]);
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      {/* Page Header */}
-      <Box mb={3}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-          Dashboard Overview
-        </Typography>
-        <Typography variant="body1" color="textSecondary">
-          Welcome back! Here's what's happening with your platform today.
-        </Typography>
+    <Box sx={{ p: 3, backgroundColor: '#f9fafc' }}>
+      {/* Top Action Bar */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} pb={2} borderBottom="1px solid #eaedf2">
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#2C3E50', mb: 0.5 }}>
+            Global Dashboard
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Real-time overview of platform operations • Last updated: {new Date().toLocaleTimeString()}
+          </Typography>
+        </Box>
+        <Box display="flex" gap={2}>
+          <Button 
+            variant="outlined" 
+            color="primary" 
+            startIcon={<AttachMoneyIcon />}
+            sx={{ 
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 500,
+              boxShadow: 'none'
+            }}
+          >
+            Export CSV
+          </Button>
+          <Button 
+            variant="contained" 
+            color="warning"
+            sx={{ 
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 500,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            }}
+          >
+            🔧 Maintenance Mode
+          </Button>
+          <Button 
+            variant="contained" 
+            color="error"
+            sx={{ 
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 500,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+            }}
+          >
+            🚨 Emergency Stop
+          </Button>
+        </Box>
       </Box>
 
-      {/* KPI Cards */}
-      <Grid container spacing={3} mb={4}>
+      {/* Metric Cards */}
+      <Grid container spacing={3} mb={3}>
         <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Total Revenue"
-            value="$95,420"
-            change="+12.5% from last month"
-            changeType="positive"
-            icon={<AttachMoney />}
-            color="#4caf50"
+          <MetricCard
+            title="Revenue (30d)"
+            value={metrics.revenue}
+            change={metrics.revenueChange}
+            trend="up"
+            icon={<AttachMoneyIcon sx={{ fontSize: 30 }} />}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <KPICard
+          <MetricCard
             title="Active Users"
-            value="1,652"
-            change="+8.2% from last month"
-            changeType="positive"
-            icon={<People />}
-            color="#2196f3"
+            value={metrics.activeUsers}
+            change={metrics.usersChange}
+            trend="up"
+            icon={<GroupIcon sx={{ fontSize: 30 }} />}
+            prefix=""
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="Transactions"
-            value="8,429"
-            change="+15.3% from last month"
-            changeType="positive"
-            icon={<Receipt />}
-            color="#ff9800"
+          <MetricCard
+            title="Deposits (24h)"
+            value={metrics.deposits}
+            change={metrics.depositsChange}
+            trend="down"
+            icon={<AccountBalanceWalletIcon sx={{ fontSize: 30 }} />}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <KPICard
-            title="KYC Pending"
-            value="127"
-            change="-5.1% from last month"
-            changeType="negative"
-            icon={<Security />}
-            color="#9c27b0"
+          <MetricCard
+            title="Pending Withdrawals"
+            value={metrics.withdrawals}
+            change={0}
+            trend="up"
+            icon={<PendingIcon sx={{ fontSize: 30 }} />}
           />
         </Grid>
       </Grid>
 
       {/* Charts Row */}
-      <Grid container spacing={3} mb={4}>
-        {/* Revenue Chart */}
+      <Grid container spacing={3} mb={3}>
         <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6" gutterBottom>
-                  Revenue & User Growth
+          <Card 
+            sx={{ 
+              height: 400, 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              <Box sx={{ p: 2, borderBottom: '1px solid #eaedf2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    color: '#2C3E50',
+                    fontSize: '1rem'
+                  }}
+                >
+                  Revenue Trend
                 </Typography>
-                <IconButton>
-                  <MoreVert />
-                </IconButton>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    sx={{ 
+                      borderRadius: '4px', 
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                      py: 0.5,
+                      minWidth: 'auto'
+                    }}
+                  >
+                    Week
+                  </Button>
+                  <Button 
+                    size="small" 
+                    variant="contained" 
+                    sx={{ 
+                      borderRadius: '4px', 
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                      py: 0.5,
+                      minWidth: 'auto',
+                      bgcolor: '#4CAF50',
+                      '&:hover': {
+                        bgcolor: '#3d9140'
+                      }
+                    }}
+                  >
+                    Month
+                  </Button>
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    sx={{ 
+                      borderRadius: '4px', 
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                      py: 0.5,
+                      minWidth: 'auto'
+                    }}
+                  >
+                    Year
+                  </Button>
+                </Box>
               </Box>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#00d4ff" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#00d4ff"
-                    fillOpacity={1}
-                    fill="url(#colorRevenue)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <Box sx={{ p: 2, height: 'calc(100% - 56px)' }}>
+                <RevenueTrendChart />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Transaction Distribution */}
         <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Transaction Distribution
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={transactionData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {transactionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+          <Card 
+            sx={{ 
+              height: 400, 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              <Box sx={{ p: 2, borderBottom: '1px solid #eaedf2' }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    color: '#2C3E50',
+                    fontSize: '1rem'
+                  }}
+                >
+                  Conversion Funnel
+                </Typography>
+              </Box>
+              <Box sx={{ p: 2, height: 'calc(100% - 56px)' }}>
+                <ConversionFunnel />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Bottom Row */}
+      {/* Activity and Provider Status Row */}
       <Grid container spacing={3}>
-        {/* KYC Status Chart */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                KYC Processing Status (Last 7 Days)
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={kycStatusData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="approved" fill="#4caf50" name="Approved" />
-                  <Bar dataKey="pending" fill="#ff9800" name="Pending" />
-                  <Bar dataKey="rejected" fill="#f44336" name="Rejected" />
-                </BarChart>
-              </ResponsiveContainer>
+        <Grid item xs={12} md={6}>
+          <Card 
+            sx={{ 
+              height: 400, 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              <Box sx={{ p: 2, borderBottom: '1px solid #eaedf2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    color: '#2C3E50',
+                    fontSize: '1rem'
+                  }}
+                >
+                  Live Activity Feed
+                </Typography>
+                <Button 
+                  size="small" 
+                  variant="text" 
+                  color="primary"
+                  sx={{ 
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  View All
+                </Button>
+              </Box>
+              <Box sx={{ p: 0, height: 'calc(100% - 56px)', overflowY: 'auto' }}>
+                <LiveActivityFeed />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Recent Activity */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Activity
-              </Typography>
-              <Box>
-                {[
-                  { text: 'New user registration', time: '2 min ago', status: 'success' },
-                  { text: 'Large withdrawal pending', time: '5 min ago', status: 'warning' },
-                  { text: 'KYC document uploaded', time: '8 min ago', status: 'info' },
-                  { text: 'Compliance alert triggered', time: '12 min ago', status: 'error' },
-                  { text: 'System backup completed', time: '15 min ago', status: 'success' },
-                ].map((activity, index) => (
-                  <Box key={index} display="flex" alignItems="center" mb={2}>
-                    <Box mr={2}>
-                      {activity.status === 'success' && <CheckCircle sx={{ color: '#4caf50' }} />}
-                      {activity.status === 'warning' && <Warning sx={{ color: '#ff9800' }} />}
-                      {activity.status === 'info' && <Security sx={{ color: '#2196f3' }} />}
-                      {activity.status === 'error' && <Warning sx={{ color: '#f44336' }} />}
-                    </Box>
-                    <Box flexGrow={1}>
-                      <Typography variant="body2">{activity.text}</Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {activity.time}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
+        <Grid item xs={12} md={6}>
+          <Card 
+            sx={{ 
+              height: 400, 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
+              <Box sx={{ p: 2, borderBottom: '1px solid #eaedf2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    color: '#2C3E50',
+                    fontSize: '1rem'
+                  }}
+                >
+                  Provider Status
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box 
+                    sx={{ 
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#4CAF50', 
+                      mr: 1 
+                    }} 
+                  />
+                  <Typography variant="caption" color="textSecondary">
+                    All Systems Operational
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ p: 0, height: 'calc(100% - 56px)' }}>
+                <ProviderStatus />
               </Box>
             </CardContent>
           </Card>
@@ -295,3 +458,5 @@ export const Dashboard: React.FC = () => {
     </Box>
   );
 };
+
+export default Dashboard;

@@ -3,7 +3,6 @@ import {
   Edit,
   SimpleForm,
   TextInput,
-  EmailInput,
   SelectInput,
   NumberInput,
   DateInput,
@@ -30,7 +29,7 @@ export const UserEdit = () => (
       <TextInput source="id" disabled />
       <TextInput source="username" validate={[required()]} />
       <TextInput source="fullName" validate={[required()]} />
-      <EmailInput source="email" validate={[required(), email()]} />
+      <TextInput source="email" validate={[required(), email()]} />
       <SelectInput source="status" choices={statusChoices} validate={[required()]} />
       <SelectInput source="kycStatus" choices={kycStatusChoices} validate={[required()]} />
       <NumberInput source="goldCoins" />

@@ -6,7 +6,11 @@ import {
   DateField,
   NumberField,
   ReferenceField,
-  ChipField,
+  SelectInput,
+  TextInput,
+  DateInput,
+  ReferenceInput,
+  EditButton,
 } from 'react-admin';
 import { Chip } from '@mui/material';
 
@@ -30,18 +34,41 @@ const StatusField = ({ record }: any) => {
   );
 };
 
+const paymentFilters = [
+  <TextInput source="q" label="Search" alwaysOn />,
+  <ReferenceInput source="userId" label="User" reference="users">
+    <SelectInput optionText="username" />
+  </ReferenceInput>,
+  <SelectInput source="type" choices={[
+    { id: 'DEPOSIT', name: 'Deposit' },
+    { id: 'WITHDRAWAL', name: 'Withdrawal' },
+    { id: 'REFUND', name: 'Refund' },
+    { id: 'BONUS', name: 'Bonus' },
+  ]} />,
+  <SelectInput source="status" choices={[
+    { id: 'PENDING', name: 'Pending' },
+    { id: 'PROCESSING', name: 'Processing' },
+    { id: 'COMPLETED', name: 'Completed' },
+    { id: 'FAILED', name: 'Failed' },
+    { id: 'CANCELLED', name: 'Cancelled' },
+  ]} />,
+  <DateInput source="createdAt_gte" label="From Date" />,
+  <DateInput source="createdAt_lte" label="To Date" />,
+];
+
 export const PaymentList = () => (
-  <List title="Payment Management">
-    <Datagrid>
+  <List title="Payment Management" filters={paymentFilters}>
+    <Datagrid rowClick="edit">
       <TextField source="id" />
-      <ReferenceField source="userId" reference="users">
+      <ReferenceField source="user.id" reference="users" label="User">
         <TextField source="username" />
       </ReferenceField>
       <NumberField source="amount" options={{ style: 'currency', currency: 'USD' }} />
       <TextField source="type" />
       <StatusField source="status" />
       <TextField source="paymentMethod" />
-      <DateField source="timestamp" showTime />
+      <DateField source="createdAt" label="Date" showTime />
+      <EditButton />
     </Datagrid>
   </List>
 );

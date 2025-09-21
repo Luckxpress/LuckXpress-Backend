@@ -1,11 +1,13 @@
 import React from 'react';
-import { Card, CardContent, CardHeader } from 'react-admin';
 import {
   Grid,
   Typography,
   Box,
   Avatar,
   LinearProgress,
+  Card,
+  CardContent,
+  CardHeader,
 } from '@mui/material';
 import {
   TrendingUp,

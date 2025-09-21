@@ -1,18 +1,17 @@
 import React from 'react';
 import { Admin, Resource } from 'react-admin';
 import { createTheme } from '@mui/material/styles';
-import { BrowserRouter } from 'react-router-dom';
 import CustomLayout from './components/Layout/CustomLayout';
-import Dashboard from './components/Dashboard';
-import authProvider from './services/auth/authProvider';
-import dataProvider from './services/api/dataProvider';
+import Dashboard from './pages/Dashboard';
+import { authProvider } from './authProvider';
+import { dataProvider } from './dataProvider';
 
 // Import page components
 import { UserList, UserEdit, UserCreate } from './pages/Users';
-import { PaymentList } from './pages/Payments';
-import { KYCList } from './pages/KYC';
+import { PaymentList, PaymentEdit, PaymentCreate } from './pages/Payments';
+import { KYCList, KYCEdit, KYCCreate } from './pages/KYC';
 import { WithdrawalList } from './pages/Withdrawals';
-import { LeadList } from './pages/Leads';
+import { LeadList, LeadEdit, LeadCreate } from './pages/Leads';
 
 // Icons
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -20,6 +19,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import PaymentIcon from '@mui/icons-material/Payment';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import ContactsIcon from '@mui/icons-material/Contacts';
 
 const theme = createTheme({
   palette: {
@@ -90,11 +90,15 @@ const App = () => {
       <Resource 
         name="payments" 
         list={PaymentList}
+        edit={PaymentEdit}
+        create={PaymentCreate}
         icon={PaymentIcon}
       />
       <Resource 
         name="kyc" 
-        list={KYCList}
+        list={KYCList} 
+        edit={KYCEdit} 
+        create={KYCCreate}
         icon={VerifiedUserIcon}
       />
       <Resource 
@@ -105,7 +109,9 @@ const App = () => {
       <Resource 
         name="leads" 
         list={LeadList}
-        icon={PeopleIcon}
+        edit={LeadEdit}
+        create={LeadCreate}
+        icon={ContactsIcon}
       />
     </Admin>
   );

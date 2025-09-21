@@ -3,7 +3,6 @@ import {
   Create,
   SimpleForm,
   TextInput,
-  EmailInput,
   SelectInput,
   NumberInput,
   required,
@@ -28,7 +27,7 @@ export const UserCreate = () => (
     <SimpleForm>
       <TextInput source="username" validate={[required()]} />
       <TextInput source="fullName" validate={[required()]} />
-      <EmailInput source="email" validate={[required(), email()]} />
+      <TextInput source="email" validate={[required(), email()]} />
       <SelectInput source="status" choices={statusChoices} validate={[required()]} defaultValue="pending" />
       <SelectInput source="kycStatus" choices={kycStatusChoices} validate={[required()]} defaultValue="not_submitted" />
       <NumberInput source="goldCoins" defaultValue={0} />

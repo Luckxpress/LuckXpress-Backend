@@ -73,7 +73,7 @@ const sidebarItems: SidebarItem[] = [
     children: [
       { text: 'All Transactions', icon: <TransactionIcon />, path: '/transactions' },
       { text: 'Pending Transactions', icon: <Notifications />, path: '/transactions/pending' },
-      { text: 'Failed Transactions', icon: <Warning />, path: '/transactions/failed' },
+      { text: 'Failed Transactions', icon: <AlertIcon />, path: '/transactions/failed' },
       { text: 'Transaction Reports', icon: <Assessment />, path: '/transactions/reports' },
     ],
   },
