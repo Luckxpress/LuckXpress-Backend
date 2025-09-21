@@ -30,6 +30,20 @@ public enum TransactionType {
     private final boolean credit;
     private final boolean requiresApproval;
     
+    /**
+     * Check if this transaction type is a credit (increases balance)
+     */
+    public boolean isCredit() {
+        return credit;
+    }
+    
+    /**
+     * Check if this transaction type is a debit (decreases balance)
+     */
+    public boolean isDebit() {
+        return !credit;
+    }
+    
     public static TransactionType fromCode(String code) {
         for (TransactionType type : values()) {
             if (type.code.equalsIgnoreCase(code)) {

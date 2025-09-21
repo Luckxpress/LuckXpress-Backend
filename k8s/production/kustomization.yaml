@@ -1,0 +1,78 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: luckxpress-production
+  annotations:
+    config.kubernetes.io/local-config: "true"
+
+namespace: luckxpress-prod
+
+resources:
+- namespace.yaml
+- rbac.yaml
+- secrets.yaml
+- configmap.yaml
+- deployment.yaml
+- service.yaml
+- ingress.yaml
+- infrastructure.yaml
+- network-policy.yaml
+- pdb.yaml
+
+images:
+- name: ghcr.io/luckxpress/backend
+  newTag: v1.0.0
+
+configMapGenerator:
+- name: luckxpress-app-config
+  files:
+  - application-k8s.yml
+
+secretGenerator:
+- name: luckxpress-tls-secret
+  type: kubernetes.io/tls
+  files:
+  - tls.crt=ssl/tls.crt
+  - tls.key=ssl/tls.key
+
+patchesStrategicMerge:
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: luckxpress-backend
+    namespace: luckxpress-prod
+  spec:
+    template:
+      metadata:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "8081"
+          prometheus.io/path: "/actuator/prometheus"
+      spec:
+        containers:
+        - name: luckxpress
+          env:
+          - name: BUILD_VERSION
+            value: "v1.0.0"
+          - name: ENVIRONMENT
+            value: "production"
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: KUBERNETES_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+
+commonLabels:
+  app: luckxpress
+  version: v1.0.0
+  environment: production
+
+commonAnnotations:
+  luckxpress.com/managed-by: "kustomize"
+  luckxpress.com/deployed-at: "2025-01-21"
+  luckxpress.com/compliance: "enabled"

@@ -1,0 +1,99 @@
+groups:
+  - name: compliance
+    interval: 30s
+    rules:
+      # State Restriction Violations
+      - alert: StateRestrictionViolation
+        expr: increase(compliance_state_restriction_violations_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: compliance
+        annotations:
+          summary: "State restriction violation detected"
+          description: "User from restricted state {{ $labels.state }} attempted Sweeps play"
+          sentry_alert: "true"
+      
+      # KYC Failures
+      - alert: HighKYCFailureRate
+        expr: rate(kyc_verification_failures_total[15m]) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+          component: kyc
+        annotations:
+          summary: "High KYC failure rate"
+          description: "KYC failure rate is {{ $value | humanizePercentage }}"
+      
+      # Withdrawal Without KYC
+      - alert: WithdrawalWithoutKYC
+        expr: increase(withdrawal_kyc_blocked_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: high
+          component: compliance
+        annotations:
+          summary: "Multiple withdrawal attempts without KYC"
+          description: "{{ $value }} withdrawal attempts blocked due to KYC"
+      
+      # Dual Approval Timeout
+      - alert: DualApprovalTimeout
+        expr: dual_approval_pending_age_seconds > 3600
+        for: 5m
+        labels:
+          severity: warning
+          component: compliance
+        annotations:
+          summary: "Dual approval request pending too long"
+          description: "Approval request {{ $labels.approval_id }} pending for {{ $value | humanizeDuration }}"
+      
+      # Suspicious Transaction Pattern
+      - alert: SuspiciousTransactionPattern
+        expr: increase(suspicious_transaction_detected_total[10m]) > 3
+        for: 2m
+        labels:
+          severity: critical
+          component: fraud
+        annotations:
+          summary: "Suspicious transaction pattern detected"
+          description: "{{ $value }} suspicious transactions in last 10 minutes"
+          sentry_alert: "true"
+          pagerduty: "true"
+
+  - name: financial
+    interval: 30s
+    rules:
+      # Ledger Imbalance
+      - alert: LedgerImbalance
+        expr: abs(ledger_balance_difference) > 0.01
+        for: 1m
+        labels:
+          severity: critical
+          component: ledger
+        annotations:
+          summary: "Ledger imbalance detected"
+          description: "Ledger imbalance of {{ $value }} for user {{ $labels.user_id }}"
+          sentry_alert: "true"
+          pagerduty: "true"
+      
+      # Payment Failure Rate
+      - alert: HighPaymentFailureRate
+        expr: rate(payment_failures_total[5m]) / rate(payment_attempts_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: high
+          component: payments
+        annotations:
+          summary: "High payment failure rate"
+          description: "Payment failure rate is {{ $value | humanizePercentage }}"
+      
+      # Daily Deposit Limit Breach
+      - alert: DailyDepositLimitBreach
+        expr: daily_deposit_total > 10000
+        for: 1m
+        labels:
+          severity: warning
+          component: compliance
+        annotations:
+          summary: "User exceeded daily deposit limit"
+          description: "User {{ $labels.user_id }} deposited {{ $value }} today"

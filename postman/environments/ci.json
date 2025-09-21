@@ -1,0 +1,85 @@
+{
+  "id": "ci-environment",
+  "name": "CI Environment",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "api_version",
+      "value": "v1",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "timeout",
+      "value": "30000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "test_user_email",
+      "value": "ci-test@luckxpress.com",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "test_user_password",
+      "value": "TestPassword123!",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "admin_email",
+      "value": "ci-admin@luckxpress.com",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "admin_password",
+      "value": "AdminPassword123!",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "correlation_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "idempotency_key",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "test_amount_gold",
+      "value": "100.0000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "test_amount_sweeps",
+      "value": "50.0000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "max_retry_attempts",
+      "value": "3",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

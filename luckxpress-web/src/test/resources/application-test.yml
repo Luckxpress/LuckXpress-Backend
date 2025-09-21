@@ -1,0 +1,160 @@
+spring:
+  application:
+    name: luckxpress-backend-test
+  
+  # Database Configuration (Testcontainers will override)
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        
+  # Redis Configuration (Testcontainers will override)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ''
+      timeout: 2000ms
+      connect-timeout: 2000ms
+      
+  # Flyway Configuration
+  flyway:
+    enabled: false  # Disabled for tests using schema creation
+    
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/auth/realms/luckxpress-test
+
+# Server Configuration  
+server:
+  port: 0  # Random port for tests
+  servlet:
+    context-path: /
+
+# Logging Configuration
+logging:
+  level:
+    com.luckxpress: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.testcontainers: INFO
+    io.restassured: DEBUG
+    
+# Management & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# LuckXpress Configuration  
+luckxpress:
+  # API Configuration
+  api:
+    version: v1
+    base-path: /api/v1
+    
+  # Compliance Configuration
+  compliance:
+    restricted-states: [WA, ID]
+    kyc:
+      required-for-withdrawal: true
+      verification-timeout: PT30M
+      document-retention-days: 2555  # 7 years
+    dual-approval:
+      threshold: 1000.00
+      required-roles: [ADMIN, SUPER_ADMIN]
+      
+  # Currency Configuration  
+  currency:
+    gold:
+      precision: 4
+      minimum-deposit: 1.0000
+      maximum-daily-deposit: 10000.0000
+    sweeps:
+      precision: 4
+      minimum-withdrawal: 50.0000
+      maximum-daily-withdrawal: 5000.0000
+      bonus-ratio: 0.05  # 5% bonus sweeps on gold purchase
+      
+  # AMOE Configuration
+  amoe:
+    daily-limit: 1
+    sweeps-granted: 5.0000
+    allowed-methods: [MAIL_IN, ONLINE_REQUEST]
+    
+  # Rate Limiting
+  rate-limit:
+    requests-per-minute: 60
+    burst-capacity: 100
+    
+  # JWT Configuration
+  jwt:
+    secret: test-secret-key-for-jwt-tokens-must-be-256-bits-long
+    expiration: PT1H  # 1 hour for tests
+    refresh-expiration: P7D  # 7 days
+    
+  # Sentry Configuration (disabled for tests)
+  sentry:
+    dsn: ''
+    enabled: false
+    
+  # External Services (mocked in tests)
+  external:
+    payment-processor:
+      url: http://localhost:8081/mock
+      timeout: PT5S
+    kyc-provider:
+      url: http://localhost:8082/mock  
+      timeout: PT10S
+    audit-service:
+      url: http://localhost:8083/mock
+      timeout: PT3S
+
+# Test-specific configuration
+test:
+  fixtures:
+    users:
+      verified-user:
+        email: test-verified@luckxpress.com
+        state: CA
+        kyc-status: VERIFIED
+      unverified-user:
+        email: test-unverified@luckxpress.com  
+        state: CA
+        kyc-status: NOT_STARTED
+      restricted-user:
+        email: test-wa@luckxpress.com
+        state: WA
+        kyc-status: VERIFIED
+    admin:
+      email: test-admin@luckxpress.com
+      roles: [ADMIN]
+    super-admin:
+      email: test-super-admin@luckxpress.com
+      roles: [SUPER_ADMIN]
+      
+  integration:
+    cleanup-after-test: true
+    parallel-execution: false
+    
+# Testcontainers Configuration
+testcontainers:
+  reuse:
+    enable: true

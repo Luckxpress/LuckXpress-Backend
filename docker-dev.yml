@@ -1,0 +1,68 @@
+# Development Docker Compose Override
+# Use with: docker-compose -f docker-compose.yml -f docker-dev.yml up
+
+version: '3.9'
+
+services:
+  # Development overrides for the main application
+  app:
+    build:
+      target: builder
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - LOG_LEVEL=DEBUG
+      - MOCK_PAYMENTS=true
+      - MOCK_KYC=true
+    volumes:
+      - ./luckxpress-web/target:/app/target
+      - ./logs:/app/logs
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "5005:5005"  # Debug port
+    command: >
+      sh -c "java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 
+             $$JAVA_OPTS 
+             org.springframework.boot.loader.launch.JarLauncher"
+
+  # Development database with exposed port
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=luckxpress_dev
+      - POSTGRES_USER=dev_user
+      - POSTGRES_PASSWORD=dev_password
+
+  # Development Redis
+  redis:
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+
+  # Add pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: luckxpress-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@luckxpress.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8082:80"
+    depends_on:
+      - postgres
+    networks:
+      - luckxpress-network
+
+  # Add Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: luckxpress-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8083:8081"
+    depends_on:
+      - redis
+    networks:
+      - luckxpress-network

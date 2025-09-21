@@ -1,0 +1,1 @@
+export { KYCList } from './KYCList';

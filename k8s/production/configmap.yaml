@@ -1,0 +1,146 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: luckxpress-config
+  namespace: luckxpress-prod
+  labels:
+    app: luckxpress
+    component: config
+data:
+  application-k8s.yml: |
+    spring:
+      application:
+        name: luckxpress-backend
+      
+      datasource:
+        hikari:
+          minimum-idle: 5
+          maximum-pool-size: 20
+          idle-timeout: 300000
+          max-lifetime: 600000
+          connection-timeout: 30000
+          leak-detection-threshold: 60000
+          pool-name: LuckXpressCP
+        
+      redis:
+        host: redis-service
+        port: 6379
+        timeout: 2000ms
+        jedis:
+          pool:
+            max-active: 10
+            max-idle: 5
+            min-idle: 1
+            max-wait: 5000ms
+      
+      kafka:
+        bootstrap-servers: kafka-service:9092
+        producer:
+          acks: all
+          retries: 3
+          batch-size: 16384
+          buffer-memory: 33554432
+        consumer:
+          group-id: luckxpress-prod
+          auto-offset-reset: earliest
+    
+    server:
+      port: 8080
+      compression:
+        enabled: true
+        mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+        min-response-size: 1024
+      http2:
+        enabled: true
+    
+    management:
+      server:
+        port: 8081
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus
+      endpoint:
+        health:
+          probes:
+            enabled: true
+          group:
+            liveness:
+              include: livenessState,db,diskSpace
+            readiness:
+              include: readinessState,db,redis,kafka
+          show-details: when-authorized
+        metrics:
+          enabled: true
+        prometheus:
+          enabled: true
+      metrics:
+        export:
+          prometheus:
+            enabled: true
+        distribution:
+          percentiles-histogram:
+            http.server.requests: true
+          percentiles:
+            http.server.requests: 0.5,0.95,0.99
+          slo:
+            http.server.requests: 50ms,100ms,200ms,500ms
+    
+    logging:
+      level:
+        com.luckxpress: INFO
+        org.springframework.security: WARN
+        org.springframework.web: WARN
+        org.hibernate: WARN
+      pattern:
+        console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{correlationId:-}] %logger{36} - %msg%n"
+      file:
+        name: /app/logs/luckxpress.log
+        max-size: 100MB
+        max-history: 30
+        total-size-cap: 1GB
+    
+    luckxpress:
+      security:
+        jwt:
+          expiration: 86400
+          refresh-expiration: 604800
+        cors:
+          allowed-origins: 
+            - "https://luckxpress.com"
+            - "https://www.luckxpress.com"
+            - "https://admin.luckxpress.com"
+          allowed-methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+          allowed-headers: "*"
+          allow-credentials: true
+      
+      compliance:
+        kyc:
+          auto-approve-threshold: 1000.00
+          manual-review-threshold: 10000.00
+          verification-timeout-days: 7
+        state-restrictions:
+          wa:
+            sweeps-allowed: false
+            max-deposit: 1000.00
+          id:
+            sweeps-allowed: false
+            max-deposit: 1000.00
+        audit:
+          enabled: true
+          retention-days: 2555
+      
+      wallet:
+        bonus-sweeps-ratio: 0.05
+        withdrawal:
+          min-amount: 50.00
+          max-daily-amount: 25000.00
+          processing-fee: 2.50
+        deposit:
+          min-amount: 10.00
+          max-daily-amount: 10000.00

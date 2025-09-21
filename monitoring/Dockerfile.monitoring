@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy monitoring script
+COPY sentry-integration.py .
+
+# Set executable permissions
+RUN chmod +x sentry-integration.py
+
+# Run the monitoring script
+CMD ["python", "sentry-integration.py"]

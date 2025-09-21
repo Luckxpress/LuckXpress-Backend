@@ -1,0 +1,31 @@
+{
+  "name": "Local Environment",
+  "values": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8080",
+      "enabled": true
+    },
+    {
+      "key": "ENVIRONMENT",
+      "value": "local",
+      "enabled": true
+    },
+    {
+      "key": "CLIENT_ID",
+      "value": "luckxpress-client",
+      "enabled": true
+    },
+    {
+      "key": "CLIENT_SECRET",
+      "value": "secret",
+      "enabled": true,
+      "type": "secret"
+    },
+    {
+      "key": "SENTRY_DSN",
+      "value": "https://your-key@sentry.io/project-id",
+      "enabled": true
+    }
+  ]
+}

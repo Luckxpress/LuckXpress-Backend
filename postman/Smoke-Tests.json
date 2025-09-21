@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "LuckXpress Smoke Tests",
+    "description": "Essential smoke tests for post-deployment verification",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Health check returns 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Application is UP', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.eql('UP');",
+              "});",
+              "",
+              "pm.test('Response time is less than 2000ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "API Version Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('API version endpoint accessible', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Version format is correct', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('version');",
+              "    pm.expect(response.version).to.match(/^\\d+\\.\\d+\\.\\d+/);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/info/version",
+          "host": ["{{base_url}}"],
+          "path": ["api", "{{api_version}}", "info", "version"]
+        }
+      }
+    },
+    {
+      "name": "Database Connectivity",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Database connectivity check passes', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Database status is healthy', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.database).to.eql('UP');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health/db",
+          "host": ["{{base_url}}"],
+          "path": ["health", "db"]
+        }
+      }
+    },
+    {
+      "name": "Authentication Endpoint",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Auth endpoint responds correctly to invalid credentials', function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test('Error format is correct', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('error');",
+              "    pm.expect(response.error).to.eql('INVALID_CREDENTIALS');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"invalid@example.com\",\n    \"password\": \"wrongpassword\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "{{api_version}}", "auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "Rate Limiting Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Rate limiting headers present', function () {",
+              "    pm.expect(pm.response.headers.has('X-RateLimit-Limit')).to.be.true;",
+              "    pm.expect(pm.response.headers.has('X-RateLimit-Remaining')).to.be.true;",
+              "});",
+              "",
+              "pm.test('Response is within acceptable range', function () {",
+              "    // Should be 200 (success) or 429 (rate limited)",
+              "    pm.expect([200, 429]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/{{api_version}}/info/version",
+          "host": ["{{base_url}}"],
+          "path": ["api", "{{api_version}}", "info", "version"]
+        }
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Generate correlation ID for request tracking",
+          "const correlationId = require('uuid').v4();",
+          "pm.environment.set('correlation_id', correlationId);",
+          "",
+          "// Set request headers",
+          "pm.request.headers.add({",
+          "    key: 'X-Correlation-ID',",
+          "    value: correlationId",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "api_version", 
+      "value": "v1"
+    }
+  ]
+}

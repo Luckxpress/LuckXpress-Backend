@@ -1,0 +1,104 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: luckxpress-backend-pdb
+  namespace: luckxpress-prod
+  labels:
+    app: luckxpress
+    component: backend
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: luckxpress
+      component: backend
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: luckxpress-monitoring-config
+  namespace: luckxpress-prod
+  labels:
+    app: luckxpress
+    component: monitoring
+data:
+  alert-rules.yml: |
+    groups:
+    - name: luckxpress.rules
+      rules:
+      - alert: LuckXpressHighErrorRate
+        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          service: luckxpress
+        annotations:
+          summary: "High error rate detected in LuckXpress"
+          description: "Error rate is {{ $value }} errors per second"
+          runbook_url: "https://wiki.luckxpress.com/runbooks/high-error-rate"
+      
+      - alert: LuckXpressHighResponseTime
+        expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: luckxpress
+        annotations:
+          summary: "High response time detected in LuckXpress"
+          description: "95% percentile response time is {{ $value }}s"
+          runbook_url: "https://wiki.luckxpress.com/runbooks/high-response-time"
+      
+      - alert: LuckXpressKYCQueueBacklog
+        expr: luckxpress_kyc_queue_size > 100
+        for: 10m
+        labels:
+          severity: warning
+          service: luckxpress
+          team: compliance
+        annotations:
+          summary: "KYC queue backlog detected"
+          description: "{{ $value }} items in KYC queue requiring attention"
+          runbook_url: "https://wiki.luckxpress.com/runbooks/kyc-backlog"
+      
+      - alert: LuckXpressSuspiciousActivity
+        expr: increase(luckxpress_suspicious_activities_count[1h]) > 10
+        for: 0m
+        labels:
+          severity: critical
+          service: luckxpress
+          team: security
+        annotations:
+          summary: "Suspicious activity spike detected"
+          description: "{{ $value }} suspicious activities in the last hour"
+          runbook_url: "https://wiki.luckxpress.com/runbooks/suspicious-activity"
+      
+      - alert: LuckXpressHighMemoryUsage
+        expr: container_memory_usage_bytes{pod=~"luckxpress-backend-.*"} / container_spec_memory_limit_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: luckxpress
+        annotations:
+          summary: "High memory usage in LuckXpress pods"
+          description: "Memory usage is {{ $value | humanizePercentage }} of limit"
+      
+      - alert: LuckXpressHighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{pod=~"luckxpress-backend-.*"}[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: luckxpress
+        annotations:
+          summary: "High CPU usage in LuckXpress pods"
+          description: "CPU usage is {{ $value | humanizePercentage }}"
+      
+      - alert: LuckXpressPodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total{pod=~"luckxpress-backend-.*"}[15m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: luckxpress
+        annotations:
+          summary: "LuckXpress pod is crash looping"
+          description: "Pod {{ $labels.pod }} is restarting frequently"

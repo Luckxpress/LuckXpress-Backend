@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: luckxpress-prod
+  labels:
+    name: luckxpress-prod
+    environment: production
+    monitoring: enabled
+
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: luckxpress-quota
+  namespace: luckxpress-prod
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    persistentvolumeclaims: "10"
+    services.loadbalancers: "2"

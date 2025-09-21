@@ -1,0 +1,36 @@
+{
+  "name": "Production Environment",
+  "values": [
+    {
+      "key": "BASE_URL",
+      "value": "https://api.luckxpress.com",
+      "enabled": true
+    },
+    {
+      "key": "ENVIRONMENT",
+      "value": "production",
+      "enabled": true
+    },
+    {
+      "key": "CLIENT_ID",
+      "value": "luckxpress-prod-client",
+      "enabled": true
+    },
+    {
+      "key": "CLIENT_SECRET",
+      "value": "{{PROD_CLIENT_SECRET}}",
+      "enabled": true,
+      "type": "secret"
+    },
+    {
+      "key": "SENTRY_DSN",
+      "value": "https://prod-key@sentry.io/project-id",
+      "enabled": true
+    },
+    {
+      "key": "API_RATE_LIMIT",
+      "value": "1000",
+      "enabled": true
+    }
+  ]
+}

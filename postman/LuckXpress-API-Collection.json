@@ -1,0 +1,219 @@
+{
+  "info": {
+    "name": "LuckXpress API Collection",
+    "description": "Complete API testing suite for LuckXpress Sweepstakes Casino",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "oauth2",
+    "oauth2": [
+      {
+        "key": "tokenUrl",
+        "value": "{{BASE_URL}}/api/v1/auth/token",
+        "type": "string"
+      },
+      {
+        "key": "clientId",
+        "value": "{{CLIENT_ID}}",
+        "type": "string"
+      },
+      {
+        "key": "clientSecret",
+        "value": "{{CLIENT_SECRET}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "ADMIN_URL",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "ACCESS_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "IDEMPOTENCY_KEY",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Player Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('ACCESS_TOKEN', jsonData.access_token);",
+                  "",
+                  "pm.test('Response has access token', function () {",
+                  "    pm.expect(jsonData).to.have.property('access_token');",
+                  "});",
+                  "",
+                  "// Sentry tracking",
+                  "if (pm.response.code !== 200) {",
+                  "    pm.sendRequest({",
+                  "        url: 'https://sentry.io/api/events',",
+                  "        method: 'POST',",
+                  "        header: {",
+                  "            'Content-Type': 'application/json'",
+                  "        },",
+                  "        body: {",
+                  "            mode: 'raw',",
+                  "            raw: JSON.stringify({",
+                  "                message: 'Login failed in Postman test',",
+                  "                level: 'error',",
+                  "                tags: {",
+                  "                    environment: pm.environment.get('ENVIRONMENT'),",
+                  "                    test: 'player_login'",
+                  "                }",
+                  "            })",
+                  "        }",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate unique test data",
+                  "pm.collectionVariables.set('TEST_EMAIL', `test_${Date.now()}@example.com` );",
+                  "pm.collectionVariables.set('TEST_TIMESTAMP', new Date().toISOString());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"player@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"two_factor_code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet Operations",
+      "item": [
+        {
+          "name": "Deposit Gold Coins",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate idempotency key",
+                  "const idempotencyKey = 'IDEMP_' + Date.now() + '_' + Math.random().toString(36);",
+                  "pm.collectionVariables.set('IDEMPOTENCY_KEY', idempotencyKey);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Deposit successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains transaction ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('transaction_id');",
+                  "});",
+                  "",
+                  "pm.test('Gold balance updated', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.gold_balance).to.be.a('string');",
+                  "    pm.expect(parseFloat(jsonData.gold_balance)).to.be.above(0);",
+                  "});",
+                  "",
+                  "// Test idempotency",
+                  "pm.sendRequest({",
+                  "    url: pm.request.url,",
+                  "    method: 'POST',",
+                  "    header: {",
+                  "        'Content-Type': 'application/json',",
+                  "        'Authorization': `Bearer ${pm.collectionVariables.get('ACCESS_TOKEN')}` ,",
+                  "        'X-Idempotency-Key': pm.collectionVariables.get('IDEMPOTENCY_KEY')",
+                  "    },",
+                  "    body: pm.request.body",
+                  "}, function (err, response) {",
+                  "    pm.test('Idempotency works - same response', function () {",
+                  "        pm.expect(response.code).to.equal(200);",
+                  "        const originalResponse = pm.response.json();",
+                  "        const idempotentResponse = response.json();",
+                  "        pm.expect(idempotentResponse.transaction_id).to.equal(originalResponse.transaction_id);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ACCESS_TOKEN}}"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "{{IDEMPOTENCY_KEY}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"100.0000\",\n  \"payment_method\": \"CARD\",\n  \"payment_token\": \"tok_test_12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/player/deposit",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "player", "deposit"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
