@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -22,6 +24,7 @@ import java.util.Date;
 public class JwtTokenProvider {
     
     private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
     @Value("${luckxpress.jwt.access-token-validity:3600}")
     private long accessTokenValidityInSeconds;
     
@@ -82,17 +85,17 @@ public class JwtTokenProvider {
      */
     public UserPrincipal getUserPrincipalFromToken(String token) {
         try {
-            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
-            
-            String userId = claims.getSubject();
-            String username = claims.get("username", String.class);
-            String email = claims.get("email", String.class);
-            String stateCode = claims.get("stateCode", String.class);
-            Boolean kycVerified = claims.get("kycVerified", Boolean.class);
-            
+            Jwt jwt = this.jwtDecoder.decode(token);
+
+            String userId = jwt.getSubject();
+            String username = jwt.getClaim("username");
+            String email = jwt.getClaim("email");
+            String stateCode = jwt.getClaim("stateCode");
+            Boolean kycVerified = jwt.getClaim("kycVerified");
+
             @SuppressWarnings("unchecked")
-            List<String> roles = claims.get("roles", List.class);
-            
+            List<String> roles = jwt.getClaim("roles");
+
             return UserPrincipal.builder()
                 .userId(userId)
                 .username(username)
@@ -105,7 +108,6 @@ public class JwtTokenProvider {
                 .accountExpired(false)
                 .credentialsExpired(false)
                 .build();
-                
         } catch (Exception ex) {
             // log.error("Error parsing JWT token", ex);
             return null;
@@ -117,9 +119,8 @@ public class JwtTokenProvider {
      */
     public String getUserIdFromToken(String token) {
         try {
-            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
-            
-            return claims.getSubject();
+            Jwt jwt = this.jwtDecoder.decode(token);
+            return jwt.getSubject();
         } catch (Exception ex) {
             // log.error("Error extracting user ID from token", ex);
             return null;
@@ -145,9 +146,8 @@ public class JwtTokenProvider {
      */
     public boolean isRefreshToken(String token) {
         try {
-            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
-            
-            return "refresh".equals(claims.get("type", String.class));
+            Jwt jwt = this.jwtDecoder.decode(token);
+            return "refresh".equals(jwt.getClaim("type"));
         } catch (Exception ex) {
             return false;
         }
@@ -158,9 +158,8 @@ public class JwtTokenProvider {
      */
     public Instant getExpirationDateFromToken(String token) {
         try {
-            JwtClaimsSet claims = this.jwtDecoder.decode(token).getClaims();
-            
-            return claims.getExpiration();
+            Jwt jwt = this.jwtDecoder.decode(token);
+            return jwt.getExpiresAt();
         } catch (Exception ex) {
             // log.error("Error extracting expiration date from token", ex);
             return null;
@@ -172,9 +171,9 @@ public class JwtTokenProvider {
      */
     public boolean isTokenExpired(String token) {
         try {
-            // For now, return false to avoid compilation issues
-            // TODO: Implement proper JWT expiration check with correct Spring Security API
-            return false;
+            Jwt jwt = this.jwtDecoder.decode(token);
+            Instant expiresAt = jwt.getExpiresAt();
+            return expiresAt != null && expiresAt.isBefore(Instant.now());
         } catch (Exception ex) {
             return true;
         }
