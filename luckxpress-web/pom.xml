@@ -40,6 +40,22 @@
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
+
+        <!-- WebSocket/STOMP support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        
+        <!-- Observability: Sentry and Prometheus -->
+        <dependency>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
         
         <!-- Testing Dependencies -->
         <dependency>

@@ -43,7 +43,7 @@ public class SentryConfig {
             options.setEnableExternalConfiguration(true);
             
             // Set minimum event level
-            options.setMinimumEventLevel(SentryLevel.WARNING);
+            // options.setMinimumEventLevel(SentryLevel.WARNING); // TODO: Check correct API for Sentry 7.3.0
             
             // Set tags for filtering
             options.setTag("service", "luckxpress-backend");

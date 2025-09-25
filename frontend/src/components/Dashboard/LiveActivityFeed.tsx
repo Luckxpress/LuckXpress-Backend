@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -14,6 +14,8 @@ import {
   Badge,
   Fade
 } from '@mui/material';
+import { Client, StompSubscription, IMessage } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 import {
   PersonAdd,
   Payment,
@@ -143,11 +145,119 @@ const activityData: ActivityItem[] = [
 const LiveActivityFeed: React.FC = () => {
   const [activities, setActivities] = useState<ActivityItem[]>(activityData);
   const [newActivityCount, setNewActivityCount] = useState<number>(3);
-  
-  // Simulate new activities coming in
+  const [connected, setConnected] = useState<boolean>(false);
+  const stompClientRef = useRef<Client | null>(null);
+  const subscriptionRef = useRef<StompSubscription | null>(null);
+
+  const WS_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8080/ws';
+  // SockJS expects http(s) scheme; transform ws(s):// to http(s):// if needed
+  const sockUrl = WS_URL.replace(/^ws(s)?:/, (_m, s) => (s ? 'https:' : 'http:'));
+
+  const getIconByAction = (action: string) => {
+    switch (action) {
+      case 'Deposit':
+        return <Payment />;
+      case 'Withdrawal':
+        return <AccountBalanceWallet />;
+      case 'KYC Submitted':
+        return <Security />;
+      case 'Game Started':
+        return <Casino />;
+      case 'Bonus Claimed':
+        return <CheckCircle />;
+      default:
+        return <PersonAdd />;
+    }
+  };
+
+  const getColorByStatus = (status: string) => {
+    switch (status) {
+      case 'success':
+        return '#4CAF50';
+      case 'warning':
+        return '#FF9800';
+      case 'failed':
+      case 'error':
+        return '#F44336';
+      default:
+        return '#2196F3';
+    }
+  };
+
+  // Connect to STOMP and subscribe to /topic/activity
   useEffect(() => {
+    const client = new Client({
+      // Always use SockJS factory to match backend endpoint registered with withSockJS()
+      webSocketFactory: () => new SockJS(sockUrl) as unknown as WebSocket,
+      reconnectDelay: 5000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      debug: (str: string) => {
+        // Optional: console.log('[STOMP]', str);
+      },
+      onConnect: () => {
+        setConnected(true);
+        // Subscribe
+        subscriptionRef.current = client.subscribe('/topic/activity', (message: IMessage) => {
+          try {
+            const body = JSON.parse(message.body);
+            const action: string = body.action || 'Activity';
+            const status: string = body.status || 'info';
+            const amountVal = body.amount != null ? String(body.amount) : undefined;
+            const userVal = body.user != null ? String(body.user) : undefined;
+
+            const newActivity: ActivityItem = {
+              id: Date.now(),
+              type: action.toLowerCase().replace(/\s+/g, '_'),
+              message: userVal && amountVal
+                ? `${action}: ${amountVal} by ${userVal}`
+                : userVal
+                ? `${action} by ${userVal}`
+                : `${action}`,
+              time: 'Just now',
+              icon: getIconByAction(action),
+              color: getColorByStatus(status),
+              status: status,
+              user: userVal,
+              amount: amountVal,
+              isNew: true
+            };
+
+            setActivities((prev) => [newActivity, ...prev].slice(0, 50));
+            setNewActivityCount((prev) => prev + 1);
+          } catch (e) {
+            // Ignore malformed messages
+          }
+        });
+      },
+      onStompError: () => {
+        setConnected(false);
+      },
+      onWebSocketClose: () => {
+        setConnected(false);
+      }
+    });
+
+    stompClientRef.current = client;
+    client.activate();
+
+    return () => {
+      try {
+        subscriptionRef.current?.unsubscribe();
+      } catch {}
+      try {
+        client.deactivate();
+      } catch {}
+      subscriptionRef.current = null;
+      stompClientRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [WS_URL]);
+
+  // Fallback local simulation only when not connected
+  useEffect(() => {
+    if (connected) return;
     const interval = setInterval(() => {
-      // Simulate a new activity
       if (Math.random() > 0.7) {
         const newActivity: ActivityItem = {
           id: Date.now(),
@@ -159,14 +269,12 @@ const LiveActivityFeed: React.FC = () => {
           status: 'success',
           isNew: true
         };
-        
-        setActivities(prev => [newActivity, ...prev.slice(0, 8)]);
+        setActivities(prev => [newActivity, ...prev].slice(0, 50));
         setNewActivityCount(prev => prev + 1);
       }
-    }, 30000); // Every 30 seconds
-    
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [connected]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -209,6 +317,20 @@ const LiveActivityFeed: React.FC = () => {
             sx={{ fontSize: 20, mr: 1 }} 
           />
         </Badge>
+        <Box display="flex" alignItems="center" ml={1}>
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              bgcolor: connected ? '#4CAF50' : '#F44336',
+              mr: 0.8
+            }}
+          />
+          <Typography variant="caption" color={connected ? 'success.main' : 'error.main'}>
+            {connected ? 'Connected' : 'Offline'}
+          </Typography>
+        </Box>
         
         {newActivityCount > 0 && (
           <Tooltip title="Mark all as read">

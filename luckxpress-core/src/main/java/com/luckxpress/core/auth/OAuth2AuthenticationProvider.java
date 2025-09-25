@@ -1,6 +1,6 @@
 package com.luckxpress.core.auth;
 
-import com.luckxpress.core.security.UserPrincipal;
+import com.luckxpress.common.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationProvider;

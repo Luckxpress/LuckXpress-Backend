@@ -10,7 +10,7 @@ import {
   Legend,
   TooltipProps,
 } from 'recharts';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
 interface DataPoint {
   name: string;
@@ -82,7 +82,6 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
 
 const RevenueTrendChart: React.FC = () => {
   const [data, setData] = useState<DataPoint[]>(defaultData);
-  const theme = useTheme();
 
   useEffect(() => {
     const fetchRevenueTrend = async () => {

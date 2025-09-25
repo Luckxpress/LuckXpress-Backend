@@ -8,6 +8,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Sentry integration for compliance monitoring
@@ -31,7 +32,7 @@ public class ComplianceSentryIntegration {
             Sentry.captureException(e, scope -> {
                 scope.setTag("compliance.type", "kyc_failure");
                 scope.setLevel(SentryLevel.ERROR);
-                scope.setFingerprint("kyc-check-failed", e.getClass().getSimpleName());
+                scope.setFingerprint(List.of("kyc-check-failed", e.getClass().getSimpleName()));
             });
             throw e;
         }
@@ -64,7 +65,7 @@ public class ComplianceSentryIntegration {
                 scope.setTag("compliance.type", "state_restriction");
                 scope.setTag("state", state);
                 scope.setTag("user_id", userId);
-                scope.setFingerprint("state-restriction", state);
+                scope.setFingerprint(List.of("state-restriction", state));
             }
         );
     }
@@ -78,7 +79,7 @@ public class ComplianceSentryIntegration {
                 scope.setTag("user_id", userId);
                 scope.setTag("amount", amount.toPlainString());
                 scope.setTag("reason", reason);
-                scope.setFingerprint("suspicious-transaction", reason);
+                scope.setFingerprint(List.of("suspicious-transaction", reason));
             }
         );
     }

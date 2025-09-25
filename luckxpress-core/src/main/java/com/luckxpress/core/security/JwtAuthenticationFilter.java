@@ -1,5 +1,6 @@
 package com.luckxpress.core.security;
 
+import com.luckxpress.common.security.UserPrincipal;
 import com.luckxpress.core.auth.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

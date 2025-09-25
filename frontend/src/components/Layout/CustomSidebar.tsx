@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sidebar, MenuItemLink } from 'react-admin';
-import { Box, Badge, Divider } from '@mui/material';
+import { Box, Badge } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -199,56 +199,6 @@ const CustomSidebar = (props: any) => (
         }
         leftIcon={item.icon}
         sx={menuItemStyle}
-      />
-    ))}
-  </Sidebar>
-);
-
-export default CustomSidebar;
-      <MenuItemLink
-        key={item.name}
-        to={item.to}
-        primaryText={
-          item.badge ? (
-            <Badge badgeContent={item.badge} color="error">
-              {item.name}
-            </Badge>
-          ) : (
-            item.name
-          )
-        }
-        leftIcon={item.icon}
-        sx={{
-          color: 'white',
-          fontWeight: 500,
-          '& .MuiListItemText-primary': {
-            color: 'white',
-            fontWeight: 500,
-          },
-          '& .MuiListItemIcon-root': {
-            color: 'white',
-            minWidth: 36,
-          },
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            '& .MuiListItemText-primary': {
-              color: '#4CAF50',
-            },
-            '& .MuiListItemIcon-root': {
-              color: '#4CAF50',
-            },
-          },
-          '&.RaMenuItemLink-active': {
-            backgroundColor: '#4CAF50',
-            '& .MuiListItemText-primary': {
-              color: 'white',
-              fontWeight: 600,
-            },
-            '& .MuiListItemIcon-root': {
-              color: 'white',
-            },
-          },
-        }}
       />
     ))}
   </Sidebar>
