@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="create-roles-table" author="luckxpress">
+        <createTable tableName="roles">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(50)"/>
+            <column name="last_modified_by" type="VARCHAR(50)"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="create-users-table" author="luckxpress">
+        <createTable tableName="users">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="email" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="VARCHAR(50)"/>
+            <column name="last_name" type="VARCHAR(50)"/>
+            <column name="phone_number" type="VARCHAR(20)"/>
+            <column name="email_verified" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="phone_verified" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="account_locked" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="account_expired" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="credentials_expired" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="last_login_date" type="TIMESTAMP"/>
+            <column name="last_password_change_date" type="TIMESTAMP"/>
+            <column name="failed_login_attempts" type="INT" defaultValueNumeric="0"/>
+            <column name="profile_picture_url" type="VARCHAR(500)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(50)"/>
+            <column name="last_modified_by" type="VARCHAR(50)"/>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="create-user-roles-table" author="luckxpress">
+        <createTable tableName="user_roles">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="user_roles" columnNames="user_id,role_id"/>
+        <addForeignKeyConstraint 
+            baseTableName="user_roles"
+            baseColumnNames="user_id"
+            referencedTableName="users"
+            referencedColumnNames="id"
+            constraintName="fk_user_roles_user_id"/>
+        <addForeignKeyConstraint 
+            baseTableName="user_roles"
+            baseColumnNames="role_id"
+            referencedTableName="roles"
+            referencedColumnNames="id"
+            constraintName="fk_user_roles_role_id"/>
+    </changeSet>
+
+    <changeSet id="create-indexes" author="luckxpress">
+        <createIndex tableName="users" indexName="idx_users_email">
+            <column name="email"/>
+        </createIndex>
+        <createIndex tableName="users" indexName="idx_users_username">
+            <column name="username"/>
+        </createIndex>
+        <createIndex tableName="roles" indexName="idx_roles_name">
+            <column name="name"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="insert-default-roles" author="luckxpress">
+        <insert tableName="roles">
+            <column name="name" value="ROLE_USER"/>
+            <column name="description" value="Standard user role"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_date" valueDate="CURRENT_TIMESTAMP"/>
+            <column name="created_by" value="system"/>
+        </insert>
+        <insert tableName="roles">
+            <column name="name" value="ROLE_ADMIN"/>
+            <column name="description" value="Administrator role"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_date" valueDate="CURRENT_TIMESTAMP"/>
+            <column name="created_by" value="system"/>
+        </insert>
+        <insert tableName="roles">
+            <column name="name" value="ROLE_MODERATOR"/>
+            <column name="description" value="Moderator role"/>
+            <column name="is_active" valueBoolean="true"/>
+            <column name="created_date" valueDate="CURRENT_TIMESTAMP"/>
+            <column name="created_by" value="system"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
